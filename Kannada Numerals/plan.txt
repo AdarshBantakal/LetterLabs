@@ -1,0 +1,14 @@
+KANNADA Lekana APP
+├── Learning Mode 
+│   ├── Letter Pronunciation (Audio)
+│   ├── Interactive Canvas Writing
+│   ├── Real-time Feedback(ML)
+│   └── Progressive Learning (5 letters → test)
+├── Testing Mode
+│   ├── Scoring System
+│   ├── Progress Tracking
+│   └── Repeat Logic
+└── Gamification
+    ├── Points & Levels
+    ├── Achievement Badges
+    └── Progress Visualization
