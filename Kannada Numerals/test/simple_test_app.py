@@ -11,10 +11,12 @@ st.set_page_config(page_title="Kannada Digit Learner Prototype", layout="centere
 
 def load_model():
     try:
-        return tf.keras.models.load_model('best_kannada_model.h5')
+        with st.spinner("Loading AI model... Please wait"):
+            return tf.keras.models.load_model('best_kannada_model.h5')
     except:
         try:
-            return tf.keras.models.load_model('digit_recognition_cnn.h5')
+            with st.spinner("Loading AI model... Please wait"):
+                return tf.keras.models.load_model('digit_recognition_cnn.h5')
         except:
             st.error(" No model found")
             return None
@@ -75,6 +77,9 @@ def main():
         st.session_state.score = 0
     if 'attempts' not in st.session_state:
         st.session_state.attempts = 0
+    # CHANGED: Added canvas key state for clearing functionality
+    if 'canvas_key' not in st.session_state:
+        st.session_state.canvas_key = 0
     
     model = load_model()
     if not model:
@@ -113,6 +118,8 @@ def audio_learning_mode(model):
     with col_b:
         if st.button(" New Number", use_container_width=True):
             st.session_state.target_digit = random.randint(0, 9)
+            # CHANGED: Reset canvas when manually getting new number
+            st.session_state.canvas_key += 1
             st.rerun()
     
     # Show answer helper
@@ -122,6 +129,7 @@ def audio_learning_mode(model):
     
     # Drawing canvas
     st.subheader("✏️ Draw what you hear")
+    # CHANGED: Added dynamic key to force canvas refresh
     canvas_result = st_canvas(
         stroke_width=19,
         stroke_color="#000000",
@@ -129,7 +137,7 @@ def audio_learning_mode(model):
         height=300,
         width=300,
         drawing_mode="freedraw",
-        key="audio_canvas",
+        key=f"audio_canvas_{st.session_state.canvas_key}",  # CHANGED: Dynamic key for clearing
     )
     
     # Check answer - FIXED: Proper canvas empty check
@@ -140,9 +148,10 @@ def audio_learning_mode(model):
         
         processed_image = preprocess_image(canvas_result)
         if processed_image is not None:
-            predictions = model.predict(processed_image, verbose=0)
-            predicted_digit = np.argmax(predictions)
-            confidence = np.max(predictions)
+            with st.spinner("🔍 Analyzing your drawing... Please wait"):
+                predictions = model.predict(processed_image, verbose=0)
+                predicted_digit = np.argmax(predictions)
+                confidence = np.max(predictions)
             
             kannada_digits = ["೦", "೧", "೨", "೩", "೪", "೫", "೬", "೭", "೮", "೯"]
             st.session_state.attempts += 1
@@ -154,7 +163,10 @@ def audio_learning_mode(model):
                 
                 # Auto-next after 5 seconds
                 st.info("Next number in 5 seconds...")
-                time.sleep(2)  
+                with st.spinner("Loading next number..."):
+                    time.sleep(5)
+                # CHANGED: Clear canvas by updating key and get new number
+                st.session_state.canvas_key += 1
                 st.session_state.target_digit = random.randint(0, 9)
                 st.rerun()
             else:
@@ -164,6 +176,10 @@ def audio_learning_mode(model):
 def free_practice_mode(model):
     st.header("Free Practice")
     
+    # CHANGED: Added separate canvas key for practice mode
+    if 'practice_canvas_key' not in st.session_state:
+        st.session_state.practice_canvas_key = 0
+    
     # Drawing canvas
     canvas_result = st_canvas(
         stroke_width=15,
@@ -172,22 +188,23 @@ def free_practice_mode(model):
         height=300,
         width=300,
         drawing_mode="freedraw",
-        key="practice_canvas",
+        key=f"practice_canvas_{st.session_state.practice_canvas_key}",  # CHANGED: Dynamic key
     )
     
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🔍 Predict", type="primary", use_container_width=True):
+        if st.button(" Predict", type="primary", use_container_width=True):
             if is_canvas_empty(canvas_result):
                 st.warning("Draw a digit first!")
                 return
             
             processed_image = preprocess_image(canvas_result)
             if processed_image is not None:
-                predictions = model.predict(processed_image, verbose=0)
-                predicted_digit = np.argmax(predictions)
-                confidence = np.max(predictions)
+                with st.spinner(" Analyzing your drawing... Please wait"):
+                    predictions = model.predict(processed_image, verbose=0)
+                    predicted_digit = np.argmax(predictions)
+                    confidence = np.max(predictions)
                 
                 kannada_digits = ["೦", "೧", "೨", "೩", "೪", "೫", "೬", "೭", "೮", "೯"]
                 
@@ -199,7 +216,9 @@ def free_practice_mode(model):
                     play_audio(predicted_digit)
     
     with col2:
+        # CHANGED: Clear canvas by updating the key
         if st.button("🗑 Clear", use_container_width=True):
+            st.session_state.practice_canvas_key += 1
             st.rerun()
 
 if __name__ == "__main__":
