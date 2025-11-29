@@ -19,27 +19,15 @@ def load_model():
         os.path.join(model_dir, 'digit_recognition_cnn.h5')
     ]
     
-    
-    # Check what files are in the model directory
-    try:
-        files_in_dir = os.listdir(model_dir)
-    except Exception as e:
-        st.error(f"Could not list directory {model_dir}: {e}")
-        return None
-    
     for model_path in model_files:
         if os.path.exists(model_path):
             try:
-                with st.spinner(f"Loading {os.path.basename(model_path)}..."):
-                    model = tf.keras.models.load_model(model_path)
-                    return model
+                model = tf.keras.models.load_model(model_path)
+                return model
             except Exception as e:
-                st.error(f" Error loading {model_path}: {str(e)}")
                 continue
-        else:
-            st.warning(f"Model file not found: {model_path}")
     
-    st.error("❌ No model files could be loaded")
+    st.error("No model files could be loaded")
     return None
 
 def preprocess_image(image):
@@ -68,8 +56,6 @@ def play_audio(digit):
             md = f'<audio autoplay><source src="data:audio/mp3;base64,{b64}"></audio>'
             st.components.v1.html(md, height=0)
         return True
-    else:
-        st.warning(f"Audio file not found: {audio_file}")
     return False
 
 def is_canvas_empty(canvas_result):
@@ -91,7 +77,7 @@ def st_canvas(**kwargs):
         return None
 
 def main():
-    st.title(" Kannada Digit Learner ")
+    st.title(" Kannada Digit Learner Prototype")
     
     # Initialize session state
     if 'target_digit' not in st.session_state:
@@ -100,7 +86,6 @@ def main():
         st.session_state.score = 0
     if 'attempts' not in st.session_state:
         st.session_state.attempts = 0
-    # CHANGED: Added canvas key state for clearing functionality
     if 'canvas_key' not in st.session_state:
         st.session_state.canvas_key = 0
     
@@ -141,7 +126,6 @@ def audio_learning_mode(model):
     with col_b:
         if st.button(" New Number", use_container_width=True):
             st.session_state.target_digit = random.randint(0, 9)
-            # CHANGED: Reset canvas when manually getting new number
             st.session_state.canvas_key += 1
             st.rerun()
     
@@ -152,7 +136,6 @@ def audio_learning_mode(model):
     
     # Drawing canvas
     st.subheader("✏️ Draw what you hear")
-    # CHANGED: Added dynamic key to force canvas refresh
     canvas_result = st_canvas(
         stroke_width=19,
         stroke_color="#000000",
@@ -160,10 +143,10 @@ def audio_learning_mode(model):
         height=300,
         width=300,
         drawing_mode="freedraw",
-        key=f"audio_canvas_{st.session_state.canvas_key}",  # CHANGED: Dynamic key for clearing
+        key=f"audio_canvas_{st.session_state.canvas_key}",
     )
     
-    # Check answer - FIXED: Proper canvas empty check
+    # Check answer
     if st.button(" Check Answer", type="primary", use_container_width=True):
         if is_canvas_empty(canvas_result):
             st.warning("Please draw something first!")
@@ -188,7 +171,6 @@ def audio_learning_mode(model):
                 st.info("Next number in 5 seconds...")
                 with st.spinner("Loading next number..."):
                     time.sleep(2)
-                # CHANGED: Clear canvas by updating key and get new number
                 st.session_state.canvas_key += 1
                 st.session_state.target_digit = random.randint(0, 9)
                 st.rerun()
@@ -199,7 +181,6 @@ def audio_learning_mode(model):
 def free_practice_mode(model):
     st.header("Free Practice")
     
-    # CHANGED: Added separate canvas key for practice mode
     if 'practice_canvas_key' not in st.session_state:
         st.session_state.practice_canvas_key = 0
     
@@ -211,7 +192,7 @@ def free_practice_mode(model):
         height=300,
         width=300,
         drawing_mode="freedraw",
-        key=f"practice_canvas_{st.session_state.practice_canvas_key}",  # CHANGED: Dynamic key
+        key=f"practice_canvas_{st.session_state.practice_canvas_key}",
     )
     
     col1, col2 = st.columns(2)
@@ -239,14 +220,9 @@ def free_practice_mode(model):
                     play_audio(predicted_digit)
     
     with col2:
-        # CHANGED: Clear canvas by updating the key
         if st.button("🗑 Clear", use_container_width=True):
             st.session_state.practice_canvas_key += 1
             st.rerun()
 
 if __name__ == "__main__":
     main()
-
-
-
-
