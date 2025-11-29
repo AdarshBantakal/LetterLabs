@@ -64,7 +64,7 @@ def preprocess_image(image):
 
 def play_audio(digit):
     """Play audio using pre-recorded files"""
-    audio_file = f"../audio/kannada_digits/{digit}.mp3"
+    audio_file = f"Kannada Numerals/audio/kannada_digits/{digit}.mp3"
     if os.path.exists(audio_file):
         with open(audio_file, "rb") as f:
             data = f.read()
@@ -72,6 +72,8 @@ def play_audio(digit):
             md = f'<audio autoplay><source src="data:audio/mp3;base64,{b64}"></audio>'
             st.components.v1.html(md, height=0)
         return True
+    else:
+        st.warning(f"Audio file not found: {audio_file}")
     return False
 
 def is_canvas_empty(canvas_result):
@@ -248,5 +250,6 @@ def free_practice_mode(model):
 
 if __name__ == "__main__":
     main()
+
 
 
