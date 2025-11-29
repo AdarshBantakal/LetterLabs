@@ -19,23 +19,19 @@ def load_model():
         os.path.join(model_dir, 'digit_recognition_cnn.h5')
     ]
     
-    st.info(f" Looking for model files in: {model_dir}")
     
     # Check what files are in the model directory
     try:
         files_in_dir = os.listdir(model_dir)
-        st.write(f"Files in {model_dir}:", [f for f in files_in_dir if f.endswith('.h5')])
     except Exception as e:
         st.error(f"Could not list directory {model_dir}: {e}")
         return None
     
     for model_path in model_files:
         if os.path.exists(model_path):
-            st.success(f" Found model: {model_path}")
             try:
                 with st.spinner(f"Loading {os.path.basename(model_path)}..."):
                     model = tf.keras.models.load_model(model_path)
-                    st.success(f" Successfully loaded {os.path.basename(model_path)}")
                     return model
             except Exception as e:
                 st.error(f" Error loading {model_path}: {str(e)}")
@@ -95,7 +91,7 @@ def st_canvas(**kwargs):
         return None
 
 def main():
-    st.title(" Kannada Digit Learner Prototype")
+    st.title(" Kannada Digit Learner ")
     
     # Initialize session state
     if 'target_digit' not in st.session_state:
@@ -175,7 +171,7 @@ def audio_learning_mode(model):
         
         processed_image = preprocess_image(canvas_result)
         if processed_image is not None:
-            with st.spinner("🔍 Analyzing your drawing... Please wait"):
+            with st.spinner(" Analyzing your drawing... Please wait"):
                 predictions = model.predict(processed_image, verbose=0)
                 predicted_digit = np.argmax(predictions)
                 confidence = np.max(predictions)
@@ -191,7 +187,7 @@ def audio_learning_mode(model):
                 # Auto-next after 5 seconds
                 st.info("Next number in 5 seconds...")
                 with st.spinner("Loading next number..."):
-                    time.sleep(5)
+                    time.sleep(2)
                 # CHANGED: Clear canvas by updating key and get new number
                 st.session_state.canvas_key += 1
                 st.session_state.target_digit = random.randint(0, 9)
@@ -250,6 +246,7 @@ def free_practice_mode(model):
 
 if __name__ == "__main__":
     main()
+
 
 
 
