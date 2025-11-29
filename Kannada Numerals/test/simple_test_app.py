@@ -12,25 +12,36 @@ st.set_page_config(page_title="Kannada Digit Learner Prototype", layout="centere
 def load_model():
     import os
     
-    # Debug: Check current directory and files
-    st.write("Current directory:", os.getcwd())
-    st.write("Files in directory:", os.listdir('.'))
+    # Define the correct path to your model files
+    model_dir = "Kannada Numerals/test"
+    model_files = [
+        os.path.join(model_dir, 'best_kannada_model.h5'),
+        os.path.join(model_dir, 'digit_recognition_cnn.h5')
+    ]
     
-    model_files = ['best_kannada_model.h5', 'digit_recognition_cnn.h5']
+    st.info(f" Looking for model files in: {model_dir}")
     
-    for model_file in model_files:
-        if os.path.exists(model_file):
-            st.success(f"Found model file: {model_file}")
+    # Check what files are in the model directory
+    try:
+        files_in_dir = os.listdir(model_dir)
+        st.write(f"Files in {model_dir}:", [f for f in files_in_dir if f.endswith('.h5')])
+    except Exception as e:
+        st.error(f"Could not list directory {model_dir}: {e}")
+        return None
+    
+    for model_path in model_files:
+        if os.path.exists(model_path):
+            st.success(f" Found model: {model_path}")
             try:
-                with st.spinner(f"Loading {model_file}..."):
-                    model = tf.keras.models.load_model(model_file)
-                    st.success(f"✅ Successfully loaded {model_file}")
+                with st.spinner(f"Loading {os.path.basename(model_path)}..."):
+                    model = tf.keras.models.load_model(model_path)
+                    st.success(f" Successfully loaded {os.path.basename(model_path)}")
                     return model
             except Exception as e:
-                st.error(f"❌ Error loading {model_file}: {str(e)}")
+                st.error(f" Error loading {model_path}: {str(e)}")
                 continue
         else:
-            st.warning(f"Model file not found: {model_file}")
+            st.warning(f"Model file not found: {model_path}")
     
     st.error("❌ No model files could be loaded")
     return None
@@ -237,4 +248,5 @@ def free_practice_mode(model):
 
 if __name__ == "__main__":
     main()
+
 
