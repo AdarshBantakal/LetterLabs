@@ -10,16 +10,30 @@ import time
 st.set_page_config(page_title="Kannada Digit Learner Prototype", layout="centered")
 
 def load_model():
-    try:
-        with st.spinner("Loading AI model... Please wait"):
-            return tf.keras.models.load_model('best_kannada_model.h5')
-    except:
-        try:
-            with st.spinner("Loading AI model... Please wait"):
-                return tf.keras.models.load_model('digit_recognition_cnn.h5')
-        except:
-            st.error(" No model found")
-            return None
+    import os
+    
+    # Debug: Check current directory and files
+    st.write("Current directory:", os.getcwd())
+    st.write("Files in directory:", os.listdir('.'))
+    
+    model_files = ['best_kannada_model.h5', 'digit_recognition_cnn.h5']
+    
+    for model_file in model_files:
+        if os.path.exists(model_file):
+            st.success(f"Found model file: {model_file}")
+            try:
+                with st.spinner(f"Loading {model_file}..."):
+                    model = tf.keras.models.load_model(model_file)
+                    st.success(f"✅ Successfully loaded {model_file}")
+                    return model
+            except Exception as e:
+                st.error(f"❌ Error loading {model_file}: {str(e)}")
+                continue
+        else:
+            st.warning(f"Model file not found: {model_file}")
+    
+    st.error("❌ No model files could be loaded")
+    return None
 
 def preprocess_image(image):
     try:
@@ -223,3 +237,4 @@ def free_practice_mode(model):
 
 if __name__ == "__main__":
     main()
+
