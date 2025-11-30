@@ -7,18 +7,28 @@ import base64
 import os
 import time
 
+# Suppress TensorFlow warnings
+import warnings
+warnings.filterwarnings('ignore')
+tf.get_logger().setLevel('ERROR')
+
 st.set_page_config(page_title="Kannada Digit Learner Prototype", layout="centered")
 
 def load_model():
     try:
         with st.spinner("Loading AI model... Please wait"):
-            return tf.keras.models.load_model('best_kannada_model.h5')
+            model = tf.keras.models.load_model('best_kannada_model.h5')
+            # Compile the model to avoid warnings
+            model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+            return model
     except:
         try:
             with st.spinner("Loading AI model... Please wait"):
-                return tf.keras.models.load_model('digit_recognition_cnn.h5')
+                model = tf.keras.models.load_model('digit_recognition_cnn.h5')
+                model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+                return model
         except:
-            st.error(" No model found")
+            st.error("No model found. Please check if the model files exist.")
             return None
 
 def preprocess_image(image):
@@ -39,28 +49,36 @@ def preprocess_image(image):
 
 def play_audio(digit):
     """Play audio using pre-recorded files"""
-    audio_file = f"../audio/kannada_digits/{digit}.mp3"
-    if os.path.exists(audio_file):
-        with open(audio_file, "rb") as f:
-            data = f.read()
-            b64 = base64.b64encode(data).decode()
-            md = f'<audio autoplay><source src="data:audio/mp3;base64,{b64}"></audio>'
-            st.components.v1.html(md, height=0)
-        return True
-    else:
-        # Try alternative path
-        audio_file_alt = f"audio/kannada_digits/{digit}.mp3"
-        if os.path.exists(audio_file_alt):
-            with open(audio_file_alt, "rb") as f:
-                data = f.read()
-                b64 = base64.b64encode(data).decode()
-                md = f'<audio autoplay><source src="data:audio/mp3;base64,{b64}"></audio>'
-                st.components.v1.html(md, height=0)
-            return True
+    # Try multiple possible audio file paths
+    audio_paths = [
+        f"audio/kannada_digits/{digit}.mp3",
+        f"../audio/kannada_digits/{digit}.mp3",
+        f"./audio/kannada_digits/{digit}.mp3",
+        f"kannada_digits/{digit}.mp3",
+        f"../kannada_digits/{digit}.mp3"
+    ]
+    
+    for audio_file in audio_paths:
+        if os.path.exists(audio_file):
+            try:
+                with open(audio_file, "rb") as f:
+                    data = f.read()
+                    b64 = base64.b64encode(data).decode()
+                    md = f'<audio autoplay><source src="data:audio/mp3;base64,{b64}"></audio>'
+                    st.components.v1.html(md, height=0)
+                st.success(f"Playing audio for digit {digit}")
+                return True
+            except Exception as e:
+                continue
+        else:
+            st.warning(f"Audio file not found: {audio_file}")
+    
+    # If no audio file found
+    st.error(f"Audio file for digit {digit} not found in any location")
     return False
 
 def is_canvas_empty(canvas_result):
-    """Check if canvas has drawing - FIXED the array error"""
+    """Check if canvas has drawing"""
     if canvas_result is None:
         return True
     if canvas_result.image_data is None:
@@ -97,7 +115,7 @@ def get_animated_numbers_css():
         margin: 20px 0;
     }
     
-    .mobile-number-svg {
+    .number-svg {
         width: 280px;
         height: 280px;
         background: white;
@@ -140,7 +158,7 @@ def get_animated_numbers_css():
         filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
     }
     
-    .mobile-progress {
+    .progress {
         height: 8px;
         background: #e0e0e0;
         border-radius: 4px;
@@ -148,13 +166,13 @@ def get_animated_numbers_css():
         overflow: hidden;
     }
     
-    .mobile-progress-fill {
+    .progress-fill {
         height: 100%;
         background: linear-gradient(90deg, #4CAF50, #45a049);
         transition: width 0.5s ease;
     }
     
-    .mobile-number-display {
+    .number-display {
         text-align: center;
         font-size: 48px;
         font-weight: bold;
@@ -162,7 +180,7 @@ def get_animated_numbers_css():
         margin: 10px 0;
     }
     
-    .mobile-instruction {
+    .instruction {
         text-align: center;
         font-size: 18px;
         color: #666;
@@ -188,7 +206,7 @@ def create_kannada_animated_number(digit):
     kannada_numbers = {
         0: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <!-- Light base version -->
                 <path class="number-base" d="M 35,20 
                                             C 25,20 20,25 20,35 
@@ -208,7 +226,7 @@ def create_kannada_animated_number(digit):
         """,
         1: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <!-- Light base version -->
                 <path class="number-base" d="M 25,65 
                                             C 25,20 45,20 47,65" /> 
@@ -222,7 +240,7 @@ def create_kannada_animated_number(digit):
         """,
         2: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <!-- Light base version -->
                 <path class="number-base" d="M 25,45 L 55,45 M 55,45 
                                                   A 10,10 0 0,0 55,25
@@ -246,7 +264,7 @@ def create_kannada_animated_number(digit):
         """,
         3: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <!-- Light base version -->
                 <path class="number-base" d="M 38,30 
                                             C 25,30 25,20 35,20 
@@ -285,7 +303,7 @@ def create_kannada_animated_number(digit):
         """,
         4: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <path class="number-base" d="M 30,25 
                                             C 35,25 35,20 30,20 
                                             C 19,20 25,25 25,20 
@@ -316,7 +334,7 @@ def create_kannada_animated_number(digit):
         """,
         5: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <path class="number-base" d= "M 40,30 
                                             C 25,30 25,20 35,20 
                                             C 45,20 45,30 35,30
@@ -360,7 +378,7 @@ def create_kannada_animated_number(digit):
         """,
         6: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <path class="number-base" d="M 42,20 
                                             C 35,15 20,25 25,40 
                                             C 30,55 45,60 50,50
@@ -389,7 +407,7 @@ def create_kannada_animated_number(digit):
         """,
         7: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <path class="number-base" d="M 40,30 
                                             C 30,30 25,20 35,20 
                                             C 45,20 45,30 35,30
@@ -416,7 +434,7 @@ def create_kannada_animated_number(digit):
         """,
         8: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <path class="number-base" d="M   30,28 
                                             C 30,28 30,25 29,30 
                                             C 35,35 40,30 35,19
@@ -446,7 +464,7 @@ def create_kannada_animated_number(digit):
         """,
         9: """
         <div class="number-container">
-            <svg viewBox="0 0 70 80" class="mobile-number-svg">
+            <svg viewBox="0 0 70 80" class="number-svg">
                 <path class="number-base" d=" M 60,20 
                                             C 35,15 20,25 25,40 
                                             C 30,55 45,50 50,40
@@ -495,10 +513,14 @@ def main():
         st.session_state.last_played_digit = -1
     if 'animation_key' not in st.session_state:
         st.session_state.animation_key = 0
+    if 'predicted_digit' not in st.session_state:
+        st.session_state.predicted_digit = None
+    if 'page_loaded' not in st.session_state:
+        st.session_state.page_loaded = False
     
     model = load_model()
     if not model:
-        return
+        st.warning("Running in demo mode without AI model")
     
     # App mode selection
     mode = st.sidebar.radio("Mode", ["Learn Numbers", "Learn with Audio", "Free Practice"])
@@ -516,23 +538,23 @@ def step_by_step_learning(model):
     kannada_digits = ["೦", "೧", "೨", "೩", "೪", "೫", "೬", "೭", "೮", "೯"]
     current_digit = st.session_state.learning_digit
     
-    # Auto-play audio when digit changes - FIXED for digit 0
-    if st.session_state.last_played_digit != current_digit:
-        # Add a small delay to ensure the page is loaded before playing audio
-        time.sleep(0.5)
+    # Auto-play audio when digit changes
+    if not st.session_state.page_loaded or st.session_state.last_played_digit != current_digit:
+        # Play audio immediately for all digits including 0
         play_audio(current_digit)
         st.session_state.last_played_digit = current_digit
+        st.session_state.page_loaded = True
     
     # Progress bar
     progress = (current_digit + 1) / 10
     st.markdown(f"""
-        <div class="mobile-progress">
-            <div class="mobile-progress-fill" style="width: {progress * 100}%"></div>
+        <div class="progress">
+            <div class="progress-fill" style="width: {progress * 100}%"></div>
         </div>
     """, unsafe_allow_html=True)
     
     # Current number display
-    st.markdown(f'<div class="mobile-number-display">{kannada_digits[current_digit]} - {current_digit}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="number-display">{kannada_digits[current_digit]} - {current_digit}</div>', unsafe_allow_html=True)
     
     # Animation display
     st.markdown(create_kannada_animated_number(current_digit), unsafe_allow_html=True)
@@ -581,7 +603,7 @@ def step_by_step_learning(model):
     """, unsafe_allow_html=True)
     
     # Instruction
-    st.markdown('<div class="mobile-instruction">Watch the animation, then try drawing it below</div>', unsafe_allow_html=True)
+    st.markdown('<div class="instruction">Watch the animation, then try drawing it below</div>', unsafe_allow_html=True)
     
     # Control buttons
     col1, col2 = st.columns(2)
@@ -619,7 +641,7 @@ def step_by_step_learning(model):
             return
             
         processed_image = preprocess_image(canvas_result)
-        if processed_image is not None:
+        if processed_image is not None and model is not None:
             with st.spinner("Checking..."):
                 predictions = model.predict(processed_image, verbose=0)
                 predicted_digit = np.argmax(predictions)
@@ -636,6 +658,8 @@ def step_by_step_learning(model):
                 st.rerun()
             else:
                 st.error(f"Almost! Try again. You drew {kannada_digits[predicted_digit]}")
+        else:
+            st.info("Model not available - this is just for practice")
 
 def audio_learning_mode(model):
     st.header("Learn with Audio")
@@ -683,7 +707,7 @@ def audio_learning_mode(model):
             st.warning("Please draw something first!")
             return
         processed_image = preprocess_image(canvas_result)
-        if processed_image is not None:
+        if processed_image is not None and model is not None:
             with st.spinner("Analyzing your drawing..."):
                 predictions = model.predict(processed_image, verbose=0)
                 predicted_digit = np.argmax(predictions)
@@ -704,11 +728,17 @@ def audio_learning_mode(model):
             else:
                 st.error(f"Try again! You drew {kannada_digits[predicted_digit]}")
                 st.write(f"Confidence: {confidence:.1%}")
+        else:
+            st.info("Model not available - this is just for practice")
                 
 def free_practice_mode(model):
     st.header("Free Practice")
+    
     if 'practice_canvas_key' not in st.session_state:
         st.session_state.practice_canvas_key = 0
+    if 'predicted_digit' not in st.session_state:
+        st.session_state.predicted_digit = None
+    
     canvas_result = st_canvas(
         stroke_width=15,
         stroke_color="#000000", 
@@ -718,27 +748,40 @@ def free_practice_mode(model):
         drawing_mode="freedraw",
         key=f"practice_canvas_{st.session_state.practice_canvas_key}",  
     )
+    
     col1, col2 = st.columns(2)
+    
     with col1:
         if st.button("🔍 Predict", type="primary", use_container_width=True):
             if is_canvas_empty(canvas_result):
                 st.warning("Draw a digit first!")
                 return
+            
             processed_image = preprocess_image(canvas_result)
-            if processed_image is not None:
+            if processed_image is not None and model is not None:
                 with st.spinner("Analyzing your drawing..."):
                     predictions = model.predict(processed_image, verbose=0)
                     predicted_digit = np.argmax(predictions)
                     confidence = np.max(predictions)
+                
                 kannada_digits = ["೦", "೧", "೨", "೩", "೪", "೫", "೬", "೭", "೮", "೯"]
+                st.session_state.predicted_digit = predicted_digit
+                
                 st.success(f"**Predicted: {kannada_digits[predicted_digit]} ({predicted_digit})**")
-                st.metric("Confidence", f"{accuracy:.1%}")          
-                if st.button("🔊 Hear this digit"):
-                    play_audio(predicted_digit)
+                st.metric("Confidence", f"{confidence:.1%}")  # FIXED: changed accuracy to confidence
+            else:
+                st.info("Model not available - this is just for practice")
+    
     with col2:
         if st.button("🗑️ Clear", use_container_width=True):
             st.session_state.practice_canvas_key += 1
+            st.session_state.predicted_digit = None
             st.rerun()
+    
+    # Audio button for predicted digit
+    if st.session_state.predicted_digit is not None:
+        if st.button("🔊 Hear this digit", use_container_width=True):
+            play_audio(st.session_state.predicted_digit)
 
 if __name__ == "__main__":
     main()
