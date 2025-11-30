@@ -604,7 +604,7 @@ def step_by_step_learning(model):
             st.rerun()
     
     # Practice canvas
-    st.markdown("### ✏️ Practice Drawing Here")
+    st.markdown("###  Practice Drawing Here")
     canvas_result = st_canvas(
         stroke_width=20,
         stroke_color="#000000",
@@ -616,7 +616,7 @@ def step_by_step_learning(model):
     )
     
     # Check practice drawing
-    if st.button("✓ Check My Drawing", type="primary", use_container_width=True):
+    if st.button(" Check My Drawing", type="primary", use_container_width=True):
         if is_canvas_empty(canvas_result):
             st.warning("Please draw the number first!")
             return
@@ -659,7 +659,7 @@ def audio_learning_mode(model):
             else:
                 st.error("Audio file not found. Please check the audio file path.")
     with col_b:
-        if st.button("🔄 New Number", use_container_width=True):
+        if st.button(" New Number", use_container_width=True):
             st.session_state.target_digit = random.randint(0, 9)
             st.session_state.canvas_key += 1
             st.rerun()
@@ -680,7 +680,7 @@ def audio_learning_mode(model):
     )
     
     # Check answer 
-    if st.button("✅ Check Answer", type="primary", use_container_width=True):
+    if st.button(" Check Answer", type="primary", use_container_width=True):
         if is_canvas_empty(canvas_result):
             st.warning("Please draw something first!")
             return
@@ -722,7 +722,7 @@ def free_practice_mode(model):
     )
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔍 Predict", type="primary", use_container_width=True):
+        if st.button(" Predict", type="primary", use_container_width=True):
             if is_canvas_empty(canvas_result):
                 st.warning("Draw a digit first!")
                 return
@@ -735,8 +735,6 @@ def free_practice_mode(model):
                 kannada_digits = ["೦", "೧", "೨", "೩", "೪", "೫", "೬", "೭", "೮", "೯"]
                 st.success(f"**Predicted: {kannada_digits[predicted_digit]} ({predicted_digit})**")
                 st.metric("Confidence", f"{confidence:.1%}")          
-                if st.button("🔊 Hear this digit"):
-                    play_audio(predicted_digit)
     with col2:
         if st.button("🗑️ Clear", use_container_width=True):
             st.session_state.practice_canvas_key += 1
@@ -744,3 +742,4 @@ def free_practice_mode(model):
 
 if __name__ == "__main__":
     main()
+
